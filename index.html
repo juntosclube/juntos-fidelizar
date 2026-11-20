@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JUNTOS Fidelizar — Somos Mais Fortes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes jfTicker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .jf-ticker-track {
+      display: flex;
+      width: max-content;
+      animation: jfTicker 28s linear infinite;
+    }
+    .jf-ticker-track:hover {
+      animation-play-state: paused;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #ffffff !important; color: #0f172a !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- Faixa Ticker Dinâmica de Cotação JTS -->
+  <div class="no-print bg-emerald-950 border-b border-emerald-700/50 text-emerald-200 text-xs py-2 overflow-hidden">
+    <div id="jts-ticker" class="jf-ticker-track font-mono"></div>
+  </div>
+
+  <!-- Cabeçalho -->
+  <header class="no-print bg-slate-900/95 border-b border-slate-800 sticky top-0 z-40 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col lg:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div id="brand-logo" class="w-11 h-11 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center font-black text-emerald-300 text-lg overflow-hidden">
+          J
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="brand-name" class="text-lg font-black tracking-wide text-white">JUNTOS FIDELIZAR</span>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Fintech & MMN</span>
+          </div>
+          <p id="brand-slogan" class="text-[11px] font-semibold tracking-widest uppercase text-emerald-400">"SOMOS MAIS FORTES"</p>
+        </div>
+      </div>
+
+      <nav class="flex flex-wrap items-center justify-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+        <button data-tab="vitrine" onclick="setMainTab('vitrine')" class="main-tab-btn px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950">Vitrine Pública</button>
+        <button data-tab="membro" onclick="setMainTab('membro')" class="main-tab-btn px-3.5 py-2 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">Área do Membro</button>
+        <button data-tab="lojista" onclick="setMainTab('lojista')" class="main-tab-btn px-3.5 py-2 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">Painel Lojista</button>
+        <button data-tab="admin" onclick="setMainTab('admin')" class="main-tab-btn px-3.5 py-2 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800">Painel Master</button>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <button onclick="openCadastroModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl transition">
+          + Cadastrar / Assinar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Alerta de Oferta Relâmpago Ativa -->
+  <div id="flash-offer-banner" class="no-print hidden bg-amber-500/15 border-b border-amber-400/40 text-amber-200 px-4 py-2 text-xs">
+    <div id="flash-offer-content" class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2"></div>
+  </div>
+
+  <!-- Toast de Feedback -->
+  <div id="toast-box" class="no-print fixed bottom-5 right-5 z-50 hidden max-w-sm bg-slate-900 border border-emerald-500/50 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-medium"></div>
+
+  <!-- Conteúdo Principal -->
+  <main id="app-root" class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 space-y-6"></main>
+
+  <!-- Modal de Cadastro & Contrato Digital -->
+  <div id="cadastro-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-4 my-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-extrabold text-white">Adesão Oficial & Contrato Digital — JUNTOS Fidelizar</h3>
+        <button onclick="closeCadastroModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1">Nome Completo ou Razão Social</label>
+          <input id="cad-nome" type="text" value="Mariana Costa" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1">Perfil de Adesão</label>
+          <select id="cad-perfil" onchange="updateCadBonusPreview()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
+            <option value="membro">Membro (Plano Diamante VIP — +120 JTS na adesão)</option>
+            <option value="lojista">Lojista Parceiro (Plano Empresa Pro — 1.300 JTS/mês)</option>
+          </select>
+        </div>
+      </div>
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-300 space-y-1 max-h-28 overflow-y-auto">
+        <p class="font-bold text-emerald-400">Termos, Regras e Bônus Herança (8% ao 1º nível até 1% ao 8º nível)</p>
+        <p>1. A moeda interna JTS possui cotação dinâmica de resgate no varejo e preço diferenciado no atacado para lojistas.</p>
+        <p>2. O Bônus Herança distribui percentuais decrescentes (8%, 7%, 6%, 5%, 4%, 3%, 2% e 1%) sobre a movimentação elegível da rede nos 8 níveis.</p>
+        <p>3. A assinatura eletrônica abaixo registra aceite integral das regras de fidelidade, sorteios e prevenção a fraudes.</p>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-[11px] text-slate-400">Assinatura Digital (desenhe com mouse ou dedo)</label>
+          <button type="button" onclick="clearSigCanvas()" class="text-[11px] text-emerald-400 hover:underline">Limpar assinatura</button>
+        </div>
+        <canvas id="sig-canvas" width="560" height="100" class="w-full h-24 bg-slate-950 border border-slate-700 rounded-xl cursor-crosshair"></canvas>
+      </div>
+      <div class="flex items-center justify-between pt-2">
+        <span id="cad-preview" class="text-xs font-bold text-emerald-400">Bônus imediato: +120 JTS</span>
+        <button onclick="confirmarAdesaoContrato()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-5 py-2.5 rounded-xl">
+          Assinar Contrato & Ativar Conta
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cartão QR Code Rápido no Caixa -->
+  <div id="qrcode-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl max-w-sm w-full p-6 text-center space-y-4">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase text-emerald-400">Cartão Digital PDV</span>
+        <button onclick="document.getElementById('qrcode-modal').classList.add('hidden')" class="text-slate-400 hover:text-white text-xs font-bold">✕</button>
+      </div>
+      <div id="qrcode-card-body" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      mainTab: 'vitrine',
+      membroTab: 'checkin_tarefas',
+      lojistaTab: 'relatorios_bi',
+      adminTab: 'checkin_config',
+      brand: {
+        name: 'JUNTOS FIDELIZAR',
+        slogan: '"SOMOS MAIS FORTES"',
+        logoUrl: ''
+      },
+      economia: {
+        cotacaoVarejo: 1.42,
+        cotacaoAtacado: 0.85,
+        valorizacaoMensalPct: 1.5,
+        bonusTrocaLojaPct: 10,
+        variacaoDiaPct: 2.4,
+        volumeGlobalReais: 1482900
+      },
+      bannerIdx: 0,
+      banners: [
+        {
+          id: 'b1',
+          tipo: 'cartaz',
+          loja: 'Supermercado Bella Vida',
+          badge: '2x Pontos JTS',
+          titulo: 'Semana do Cliente Fidelizado com Pontos em Dobro',
+          subtitulo: 'Acumule JTS nas compras da casa e ganhe cupons gratuitos de 9 dígitos na hora.',
+          cta: 'Ver Vantagens',
+          tema: 'from-emerald-900 via-slate-900 to-slate-950',
+          ativa: true
+        },
+        {
+          id: 'b2',
+          tipo: 'video',
+          loja: 'Auto Posto Estrela',
+          badge: 'Promoção Relâmpago',
+          titulo: 'Abasteça, Gire a Roleta e Concorra ao Kit Churrasco & JTS',
+          subtitulo: 'Campanha promocional em vídeo para atrair clientes e multiplicar resgates no clube.',
+          cta: 'Girar Roleta',
+          tema: 'from-teal-900 via-slate-900 to-slate-950',
+          ativa: true
+        }
+      ],
+      ofertaRelampago: {
+        ativa: true,
+        loja: 'Padaria & Café Central',
+        titulo: '3x Pontos JTS no Café da Tarde + 1 Cupom Extra por R$ 35',
+        restanteHoras: 2
+      },
+      membro: {
+        nome: 'Carlos Silva',
+        id10: '1049283719',
+        plano: 'Diamante VIP',
+        saldoJts: 185.00,
+        streakDia: 3,
+        checkinHoje: false,
+        tarefasConcluidas: ['t1'],
+        cofrinho: {
+          metaNome: 'Viagem em Família',
+          metaJts: 500,
+          guardadoJts: 140,
+          rendimentoMensalPct: 1.8
+        },
+        girosClube: 2,
+        girosLoja: 1,
+        cupons: [
+          { codigo: '482910374', origem: 'Compra Loja Parceira', sorteio: 'Sorteio Mensal Prêmios VIP', tipo: 'Ganho', data: '18/11/2026' },
+          { codigo: '910283746', origem: 'Pacote de Cotas JTS', sorteio: 'Sorteio Especial 9 Dígitos', tipo: 'Comprado', data: '19/11/2026' }
+        ],
+        vouchers: [
+          { codigo: 'VCH-774120', premio: 'Vale-Combustível R$ 100', loja: 'Auto Posto Estrela', custoJts: 70, status: 'Pronto p/ Retirada', data: '15/11/2026' }
+        ],
+        herancaNiveis: [
+          { nivel: 1, pct: 8, indicados: 4, volumeMensalJts: 3200 },
+          { nivel: 2, pct: 7, indicados: 12, volumeMensalJts: 8400 },
+          { nivel: 3, pct: 6, indicados: 28, volumeMensalJts: 15600 },
+          { nivel: 4, pct: 5, indicados: 60, volumeMensalJts: 24000 },
+          { nivel: 5, pct: 4, indicados: 110, volumeMensalJts: 31000 },
+          { nivel: 6, pct: 3, indicados: 180, volumeMensalJts: 28500 },
+          { nivel: 7, pct: 2, indicados: 250, volumeMensalJts: 22000 },
+          { nivel: 8, pct: 1, indicados: 320, volumeMensalJts: 16000 }
+        ]
+      },
+      configCheckin: {
+        bonusCicloJts: 25,
+        bonusCicloCupons: 2,
+        dias: [
+          { dia: 1, rotulo: 'Dia 1', tipo: 'JTS', jts: 3, cupons: 0 },
+          { dia: 2, rotulo: 'Dia 2', tipo: 'JTS', jts: 5, cupons: 0 },
+          { dia: 3, rotulo: 'Dia 3', tipo: 'AMBOS', jts: 6, cupons: 1 },
+          { dia: 4, rotulo: 'Dia 4', tipo: 'JTS', jts: 8, cupons: 0 },
+          { dia: 5, rotulo: 'Dia 5', tipo: 'CUPOM', jts: 0, cupons: 2 },
+          { dia: 6, rotulo: 'Dia 6', tipo: 'JTS', jts: 12, cupons: 0 },
+          { dia: 7, rotulo: 'Dia 7 · Mega Baú', tipo: 'AMBOS', jts: 20, cupons: 3 }
+        ]
+      },
+      tarefasDiarias: [
+        { id: 't1', titulo: 'Visitar Vitrine & Ver Ofertas do Dia', descricao: 'Confira os prêmios e lojas parceiras em destaque.', tipo: 'JTS', jts: 4, cupons: 0, ativa: true },
+        { id: 't2', titulo: 'Compartilhar Convite da Rede', descricao: 'Divulgue seu link para somar na árvore binária e Bônus Herança.', tipo: 'CUPOM', jts: 0, cupons: 1, ativa: true },
+        { id: 't3', titulo: 'Girar a Roleta Diária', descricao: 'Use um giro disponível na roleta do clube ou loja parceira.', tipo: 'AMBOS', jts: 5, cupons: 1, ativa: true },
+        { id: 't4', titulo: 'Conferir Extrato & Cofrinho', descricao: 'Acompanhe seu saldo JTS e o rendimento do seu objetivo.', tipo: 'JTS', jts: 3, cupons: 0, ativa: true }
+      ],
+      roletaPremios: [
+        { label: '50 JTS', jts: 50, cupom: 0, voucher: null, cor: '#059669' },
+        { label: 'Kit Churrasco', jts: 0, cupom: 0, voucher: 'Kit Churrasco Inox Completo', cor: '#0f766e' },
+        { label: '1 Cupom 9D', jts: 0, cupom: 1, voucher: null, cor: '#047857' },
+        { label: '25 JTS', jts: 25, cupom: 0, voucher: null, cor: '#115e59' },
+        { label: 'Vale R$ 50 Loja', jts: 0, cupom: 0, voucher: 'Vale-Compras R$ 50 Parceiro', cor: '#065f46' },
+        { label: '100 JTS VIP', jts: 100, cupom: 1, voucher: null, cor: '#134e4a' }
+      ],
+      roletaAngulo: 0,
+      roletaResultado: 'Clique em Girar Roleta — a fatia exata sob o ponteiro será premiada.',
+      premios: [
+        { id: 'p1', nome: 'Vale-Combustível R$ 100', concorrente: 'R$ 135 equivalente', custoJts: 70, estoque: 18 },
+        { id: 'p2', nome: 'Vale-Supermercado R$ 200', concorrente: 'R$ 260 equivalente', custoJts: 140, estoque: 12 },
+        { id: 'p3', nome: 'Air Fryer Digital 4L', concorrente: 'R$ 449 no mercado', custoJts: 260, estoque: 7 },
+        { id: 'p4', nome: 'Smartphone 5G 128GB', concorrente: 'R$ 1.599 no mercado', custoJts: 890, estoque: 4 }
+      ],
+      lojista: {
+        nome: 'Supermercado Bella Vida',
+        plano: 'Empresa Pro (R$ 997/mês · 1.300 JTS)',
+        saldoAtacadoJts: 1300,
+        faturamentoFidelizadoMes: 48600,
+        custoPontosMes: 1105,
+        clientes: [
+          { nome: 'Ana Paula Souza', visitas: 7, gasto: 1840, diasSemComprar: 4, horario: '18h–20h', status: 'Ativo' },
+          { nome: 'Marcos Oliveira', visitas: 4, gasto: 920, diasSemComprar: 19, horario: '12h–14h', status: 'Atenção' },
+          { nome: 'Patrícia Lima', visitas: 2, gasto: 390, diasSemComprar: 36, horario: '16h–18h', status: 'Inativo' }
+        ],
+        horariosPico: [
+          { faixa: '08h–11h', pct: 45, tag: 'Manhã Moderada' },
+          { faixa: '12h–14h', pct: 72, tag: 'Almoço' },
+          { faixa: '14h–16h', pct: 28, tag: 'Horário Calmo (Ideal p/ Oferta)' },
+          { faixa: '18h–20h', pct: 94, tag: 'Pico Máximo' }
+        ]
+      }
+    };
+
+    function fmtBRL(v) {
+      return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function fmtNum(v) {
+      return Number(v || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+    }
+
+    function genCupom9() {
+      return String(Math.floor(100000000 + Math.random() * 900000000));
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toast-box');
+      box.textContent = msg;
+      box.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => box.classList.add('hidden'), 3600);
+    }
+
+    function renderTicker() {
+      const e = state.economia;
+      const linha = `
+        <span class="mx-6">💎 <strong>MOEDA JTS</strong>: Resgate Varejo <strong>${fmtBRL(e.cotacaoVarejo)}</strong></span>
+        <span class="mx-6">🏪 <strong>ATACADO LOJISTAS</strong>: <strong>${fmtBRL(e.cotacaoAtacado)} / JTS</strong></span>
+        <span class="mx-6">📈 <strong>VARIAÇÃO DIA</strong>: +${e.variacaoDiaPct}%</span>
+        <span class="mx-6">🌱 <strong>VALORIZAÇÃO PROGRAMADA</strong>: +${e.valorizacaoMensalPct}% a.m.</span>
+        <span class="mx-6">🌐 <strong>VOLUME DO CLUBE</strong>: ${fmtBRL(e.volumeGlobalReais)}</span>
+        <span class="mx-6">🛡️ <strong>${state.brand.slogan}</strong></span>
+      `;
+      document.getElementById('jts-ticker').innerHTML = linha + linha;
+    }
+
+    function renderFlashOffer() {
+      const el = document.getElementById('flash-offer-banner');
+      const body = document.getElementById('flash-offer-content');
+      if (!state.ofertaRelampago.ativa) {
+        el.classList.add('hidden');
+        return;
+      }
+      el.classList.remove('hidden');
+      body.innerHTML = `
+        <div>
+          <span class="font-extrabold uppercase mr-2">⚡ Oferta Relâmpago (${state.ofertaRelampago.restanteHoras}h restantes) — ${state.ofertaRelampago.loja}:</span>
+          <span>${state.ofertaRelampago.titulo}</span>
+        </div>
+        <button onclick="setMainTab('membro'); setMembroTab('checkin_tarefas');" class="bg-amber-400 text-slate-950 font-extrabold px-3 py-1 rounded-lg">
+          Participar Agora
+        </button>
+      `;
+    }
+
+    function setMainTab(tab) {
+      state.mainTab = tab;
+      document.querySelectorAll('.main-tab-btn').forEach(btn => {
+        const active = btn.dataset.tab === tab;
+        btn.className = active
+          ? 'main-tab-btn px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950'
+          : 'main-tab-btn px-3.5 py-2 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800';
+      });
+      render();
+    }
+
+    function setMembroTab(tab) {
+      state.membroTab = tab;
+      render();
+    }
+
+    function setLojistaTab(tab) {
+      state.lojistaTab = tab;
+      render();
+    }
+
+    function setAdminTab(tab) {
+      state.adminTab = tab;
+      render();
+    }
+
+    // --- Ações de Check-in e Tarefas Diárias ---
+    function fazerCheckinDiario() {
+      if (state.membro.checkinHoje) {
+        showToast('Você já realizou o Check-in de hoje. Volte amanhã para avançar na sequência!');
+        return;
+      }
+      const diaObj = state.configCheckin.dias.find(d => d.dia === state.membro.streakDia) || state.configCheckin.dias[0];
+      let resumo = [];
+      if (diaObj.jts > 0) {
+        state.membro.saldoJts += Number(diaObj.jts);
+        resumo.push(`+${diaObj.jts} JTS`);
+      }
+      if (diaObj.cupons > 0) {
+        for (let i = 0; i < diaObj.cupons; i++) {
+          state.membro.cupons.unshift({
+            codigo: genCupom9(),
+            origem: `Check-in Dia ${diaObj.dia}`,
+            sorteio: 'Sorteio Mensal Prêmios VIP',
+            tipo: 'Ganho',
+            data: '20/11/2026'
+          });
+        }
+        resumo.push(`+${diaObj.cupons} Cupom(ns) 9D`);
+      }
+      state.membro.checkinHoje = true;
+
+      if (state.membro.streakDia === 7) {
+        state.membro.saldoJts += Number(state.configCheckin.bonusCicloJts);
+        for (let i = 0; i < state.configCheckin.bonusCicloCupons; i++) {
+          state.membro.cupons.unshift({
+            codigo: genCupom9(),
+            origem: 'Bônus Ciclo 7 Dias',
+            sorteio: 'Sorteio Especial 9 Dígitos',
+            tipo: 'Ganho',
+            data: '20/11/2026'
+          });
+        }
+        resumo.push(`Mega Baú: +${state.configCheckin.bonusCicloJts} JTS & +${state.configCheckin.bonusCicloCupons} Cupons`);
+      }
+      showToast(`Check-in concluído! Recebido: ${resumo.join(' • ')}`);
+      render();
+    }
+
+    function concluirTarefaDiaria(id) {
+      if (state.membro.tarefasConcluidas.includes(id)) return;
+      const tarefa = state.tarefasDiarias.find(t => t.id === id);
+      if (!tarefa || !tarefa.ativa) return;
+
+      state.membro.tarefasConcluidas.push(id);
+      let ganho = [];
+      if (tarefa.jts > 0) {
+        state.membro.saldoJts += Number(tarefa.jts);
+        ganho.push(`+${tarefa.jts} JTS`);
+      }
+      if (tarefa.cupons > 0) {
+        for (let i = 0; i < tarefa.cupons; i++) {
+          state.membro.cupons.unshift({
+            codigo: genCupom9(),
+            origem: `Tarefa: ${tarefa.titulo}`,
+            sorteio: 'Sorteio Mensal Prêmios VIP',
+            tipo: 'Ganho',
+            data: '20/11/2026'
+          });
+        }
+        ganho.push(`+${tarefa.cupons} Cupom(ns) 9D`);
+      }
+      showToast(`Tarefa concluída (${tarefa.titulo}): ${ganho.join(' • ')}`);
+      render();
+    }
+
+    function resetarSimulacaoDiaria() {
+      state.membro.checkinHoje = false;
+      state.membro.streakDia = state.membro.streakDia < 7 ? state.membro.streakDia + 1 : 1;
+      state.membro.tarefasConcluidas = [];
+      showToast(`Novo dia simulado! Sequência agora no Dia ${state.membro.streakDia}.`);
+      render();
+    }
+
+    // --- Roleta Sincronizada ---
+    function girarRoleta() {
+      const total = state.roletaPremios.length;
+      const sliceDeg = 360 / total;
+      const idx = Math.floor(Math.random() * total);
+      const centerAngle = idx * sliceDeg + sliceDeg / 2;
+      const targetOffset = (360 - centerAngle) % 360;
+      const currentMod = ((state.roletaAngulo % 360) + 360) % 360;
+      const delta = (targetOffset - currentMod + 360) % 360;
+      state.roletaAngulo += 360 * 5 + delta;
+
+      const wheel = document.getElementById('roleta-wheel');
+      if (wheel) {
+        wheel.style.transition = 'transform 2.4s cubic-bezier(0.18, 0.89, 0.32, 1)';
+        wheel.style.transform = `rotate(${state.roletaAngulo}deg)`;
+      }
+
+      setTimeout(() => {
+        const premio = state.roletaPremios[idx];
+        let msgs = [premio.label];
+        if (premio.jts > 0) {
+          state.membro.saldoJts += premio.jts;
+          msgs.push(`+${premio.jts} JTS na carteira`);
+        }
+        if (premio.cupom > 0) {
+          const cod = genCupom9();
+          state.membro.cupons.unshift({
+            codigo: cod,
+            origem: 'Roleta Premiada',
+            sorteio: 'Sorteio Mensal Prêmios VIP',
+            tipo: 'Ganho',
+            data: '20/11/2026'
+          });
+          msgs.push(`Cupom #${cod}`);
+        }
+        if (premio.voucher) {
+          const vCod = 'VCH-' + Math.floor(100000 + Math.random() * 900000);
+          state.membro.vouchers.unshift({
+            codigo: vCod,
+            premio: premio.voucher,
+            loja: 'Clube / Loja Parceira',
+            custoJts: 0,
+            status: 'Pronto p/ Retirada',
+            data: '20/11/2026'
+          });
+          msgs.push(`Voucher ${vCod}`);
+        }
+        state.roletaResultado = `Premiado na fatia exata: ${msgs.join(' • ')}`;
+        showToast(state.roletaResultado);
+        render();
+      }, 2450);
+    }
+
+    function resgatarPremio(id) {
+      const p = state.premios.find(x => x.id === id);
+      if (!p || p.estoque <= 0) return;
+      if (state.membro.saldoJts < p.custoJts) {
+        showToast('Saldo JTS insuficiente. Complete Check-in ou Tarefas Diárias!');
+        return;
+      }
+      state.membro.saldoJts -= p.custoJts;
+      p.estoque -= 1;
+      const vCod = 'VCH-' + Math.floor(100000 + Math.random() * 900000);
+      state.membro.vouchers.unshift({
+        codigo: vCod,
+        premio: p.nome,
+        loja: 'Central de Prêmios JUNTOS',
+        custoJts: p.custoJts,
+        status: 'Emitido p/ Impressão',
+        data: '20/11/2026'
+      });
+      showToast(`Resgate confirmado! Voucher ${vCod} disponível para impressão.`);
+      render();
+    }
+
+    function depositarCofrinho() {
+      const val = parseFloat(document.getElementById('cofrinho-aporte').value) || 0;
+      if (val <= 0 || val > state.membro.saldoJts) {
+        showToast('Informe um valor em JTS válido dentro do seu saldo.');
+        return;
+      }
+      state.membro.saldoJts -= val;
+      state.membro.cofrinho.guardadoJts += val;
+      showToast(`Adicionado +${fmtNum(val)} JTS ao cofrinho "${state.membro.cofrinho.metaNome}".`);
+      render();
+    }
+
+    function openQRCodeModal() {
+      const m = state.membro;
+      const eq = m.saldoJts * state.economia.cotacaoVarejo;
+      document.getElementById('qrcode-card-body').innerHTML = `
+        <div class="mx-auto w-36 h-36 bg-white p-3 rounded-xl flex flex-col items-center justify-center text-slate-900">
+          <div class="grid grid-cols-5 gap-1 w-24 h-24">
+            ${Array.from({ length: 25 }, (_, i) => `<span class="${(i * 3 + m.id10.charCodeAt(i % 10)) % 2 === 0 ? 'bg-slate-950' : 'bg-white'} block rounded-[2px]"></span>`).join('')}
+          </div>
+        </div>
+        <div>
+          <p class="text-sm font-black text-white">${m.nome}</p>
+          <p class="text-xs font-mono text-emerald-400">ID: ${m.id10} · ${m.plano}</p>
+          <p class="text-xs text-slate-300 mt-1">Saldo: <strong>${fmtNum(m.saldoJts)} JTS</strong> (${fmtBRL(eq)})</p>
+        </div>
+      `;
+      document.getElementById('qrcode-modal').classList.remove('hidden');
+    }
+
+    // --- Cadastro & Assinatura Digital ---
+    function openCadastroModal() {
+      document.getElementById('cadastro-modal').classList.remove('hidden');
+      updateCadBonusPreview();
+    }
+
+    function closeCadastroModal() {
+      document.getElementById('cadastro-modal').classList.add('hidden');
+    }
+
+    function updateCadBonusPreview() {
+      const perfil = document.getElementById('cad-perfil').value;
+      document.getElementById('cad-preview').textContent = perfil === 'membro'
+        ? 'Bônus imediato: +120 JTS na adesão'
+        : 'Franquia mensal liberada: 1.300 JTS no atacado';
+    }
+
+    function clearSigCanvas() {
+      const c = document.getElementById('sig-canvas');
+      c.getContext('2d').clearRect(0, 0, c.width, c.height);
+    }
+
+    function confirmarAdesaoContrato() {
+      const nome = document.getElementById('cad-nome').value.trim() || 'Novo Associado';
+      const perfil = document.getElementById('cad-perfil').value;
+      if (perfil === 'membro') {
+        state.membro.nome = nome;
+        state.membro.id10 = String(Math.floor(1000000000 + Math.random() * 9000000000));
+        state.membro.saldoJts += 120;
+        closeCadastroModal();
+        setMainTab('membro');
+        showToast(`Contrato assinado! Bem-vindo(a), ${nome} (+120 JTS creditados).`);
+      } else {
+        state.lojista.nome = nome;
+        state.lojista.saldoAtacadoJts += 1300;
+        closeCadastroModal();
+        setMainTab('lojista');
+        showToast(`Parceria ativada para ${nome} (+1.300 JTS no atacado).`);
+      }
+    }
+
+    // --- Configuração Admin: Check-in & Tarefas ---
+    function salvarDiaCheckinAdmin(idx) {
+      const jtsVal = parseFloat(document.getElementById(`adm-dia-jts-${idx}`).value) || 0;
+      const cupVal = parseInt(document.getElementById(`adm-dia-cup-${idx}`).value, 10) || 0;
+      const tipoVal = document.getElementById(`adm-dia-tipo-${idx}`).value;
+      state.configCheckin.dias[idx].jts = jtsVal;
+      state.configCheckin.dias[idx].cupons = cupVal;
+      state.configCheckin.dias[idx].tipo = tipoVal;
+      showToast(`Dia ${idx + 1} atualizado (${jtsVal} JTS / ${cupVal} Cupons).`);
+      render();
+    }
+
+    function adicionarTarefaAdmin() {
+      const titulo = document.getElementById('nova-tarefa-titulo').value.trim();
+      const desc = document.getElementById('nova-tarefa-desc').value.trim() || 'Missão diária configurada pelo clube.';
+      const jts = parseFloat(document.getElementById('nova-tarefa-jts').value) || 0;
+      const cupons = parseInt(document.getElementById('nova-tarefa-cup').value, 10) || 0;
+      if (!titulo) {
+        showToast('Informe o título da nova tarefa diária.');
+        return;
+      }
+      const tipo = jts > 0 && cupons > 0 ? 'AMBOS' : (cupons > 0 ? 'CUPOM' : 'JTS');
+      state.tarefasDiarias.push({
+        id: 't_' + Date.now(),
+        titulo,
+        descricao: desc,
+        tipo,
+        jts,
+        cupons,
+        ativa: true
+      });
+      document.getElementById('nova-tarefa-titulo').value = '';
+      document.getElementById('nova-tarefa-desc').value = '';
+      showToast(`Nova tarefa "${titulo}" publicada para os membros!`);
+      render();
+    }
+
+    function toggleTarefaAdmin(id) {
+      const t = state.tarefasDiarias.find(x => x.id === id);
+      if (!t) return;
+      t.ativa = !t.ativa;
+      render();
+    }
+
+    function salvarEconomiaAdmin() {
+      state.economia.cotacaoVarejo = parseFloat(document.getElementById('adm-cot-varejo').value) || 1.42;
+      state.economia.cotacaoAtacado = parseFloat(document.getElementById('adm-cot-atacado').value) || 0.85;
+      state.economia.valorizacaoMensalPct = parseFloat(document.getElementById('adm-val-mes').value) || 1.5;
+      renderTicker();
+      showToast('Cotação JTS e parâmetros econômicos atualizados em todo o site.');
+      render();
+    }
+
+    // --- Renderização ---
+    function renderVitrine() {
+      const b = state.banners[state.bannerIdx % state.banners.length];
+      const totalHeranca = state.membro.herancaNiveis.reduce((acc, n) => {
+        const bonusJts = n.volumeMensalJts * (n.pct / 100);
+        return acc + bonusJts;
+      }, 0);
+
+      return `
+        <!-- Carrossel de Banners & Vídeos -->
+        <div class="bg-gradient-to-r ${b.tema} border border-emerald-500/30 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div class="space-y-2 max-w-2xl">
+            <div class="flex items-center gap-2">
+              <span class="bg-emerald-500 text-slate-950 font-extrabold text-[10px] uppercase px-2.5 py-0.5 rounded-full">${b.badge}</span>
+              <span class="text-xs text-emerald-300 font-semibold">${b.loja} · Formato: ${b.tipo.toUpperCase()}</span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-black text-white">${b.titulo}</h1>
+            <p class="text-xs md:text-sm text-slate-300">${b.subtitulo}</p>
+            <div class="pt-2 flex flex-wrap gap-2">
+              <button onclick="setMainTab('membro'); setMembroTab('checkin_tarefas');" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl">
+                Check-in & Tarefas Diárias
+              </button>
+              <button onclick="state.bannerIdx = (state.bannerIdx + 1) % state.banners.length; render();" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700">
+                Próximo Banner →
+              </button>
+            </div>
+          </div>
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 w-full md:w-64 space-y-1 text-xs">
+            <p class="text-slate-400">Cotação Resgate Membro</p>
+            <p class="text-2xl font-black text-emerald-400">${fmtBRL(state.economia.cotacaoVarejo)} <span class="text-xs font-normal text-slate-400">/ JTS</span></p>
+            <p class="text-[11px] text-slate-400 pt-1">Atacado Lojistas: <strong class="text-white">${fmtBRL(state.economia.cotacaoAtacado)}</strong></p>
+          </div>
+        </div>
+
+        <!-- Loja de Prêmios com Comparativo -->
+        <section class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-extrabold text-white">Loja de Prêmios (Vantagem Real em JTS)</h2>
+            <span class="text-xs text-slate-400">1 JTS = ${fmtBRL(state.economia.cotacaoVarejo)} no resgate</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            ${state.premios.map(p => `
+              <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-emerald-400 font-bold">Estoque: ${p.estoque} un</span>
+                    <span class="line-through text-slate-500">${p.concorrente}</span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white">${p.nome}</h3>
+                  <p class="text-lg font-black text-emerald-400">${fmtNum(p.custoJts)} JTS <span class="text-xs font-normal text-slate-400">(~${fmtBRL(p.custoJts * state.economia.cotacaoVarejo)})</span></p>
+                </div>
+                <button onclick="resgatarPremio('${p.id}')" class="w-full bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 border border-emerald-500/40 font-extrabold text-xs py-2 rounded-xl transition">
+                  Resgatar Agora
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+
+        <!-- Resumo Bônus Herança (8 Níveis: 8% a 1%) -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-extrabold text-white">Bônus Herança / Legado Vitalício (8% no 1º Nível ao 1% no 8º Nível)</h2>
+              <p class="text-xs text-slate-400">Percentual decrescente de 8% até 1% sobre a movimentação mensal em cada nível de profundidade.</p>
+            </div>
+            <div class="bg-emerald-950 border border-emerald-700/50 px-3.5 py-2 rounded-xl text-right">
+              <p class="text-[10px] text-emerald-300 uppercase font-bold">Potencial Mensal Simulado (8 Níveis)</p>
+              <p class="text-sm font-black text-white">${fmtNum(totalHeranca)} JTS (${fmtBRL(totalHeranca * state.economia.cotacaoVarejo)})</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+            ${state.membro.herancaNiveis.map(n => `
+              <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-center">
+                <p class="text-[10px] text-slate-400">Nível ${n.nivel}</p>
+                <p class="text-base font-black text-emerald-400">${n.pct}%</p>
+                <p class="text-[10px] text-slate-300">${fmtNum(n.volumeMensalJts * (n.pct / 100))} JTS</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderMembro() {
+      const m = state.membro;
+      const eqBRL = m.saldoJts * state.economia.cotacaoVarejo;
+      const totalTarefasAtivas = state.tarefasDiarias.filter(t => t.ativa).length;
+      const feitasHoje = m.tarefasConcluidas.length;
+      const pctTarefas = totalTarefasAtivas ? Math.round((feitasHoje / totalTarefasAtivas) * 100) : 0;
+      const pctCofrinho = Math.min(100, Math.round((m.cofrinho.guardadoJts / m.cofrinho.metaJts) * 100));
+
+      return `
+        <!-- Resumo do Membro -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold px-2.5 py-0.5 rounded-full">${m.plano}</span>
+              <span class="text-xs font-mono text-slate-400">ID: ${m.id10}</span>
+            </div>
+            <h2 class="text-xl font-black text-white mt-1">Olá, ${m.nome}</h2>
+            <p class="text-xs text-slate-400">Sequência atual: <strong class="text-emerald-400">Dia ${m.streakDia} de 7</strong> · ${m.cupons.length} cupons de 9 dígitos · ${m.vouchers.length} voucher(s)</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5">
+              <p class="text-[10px] text-slate-400 uppercase">Saldo Disponível</p>
+              <p class="text-lg font-black text-emerald-400">${fmtNum(m.saldoJts)} JTS <span class="text-xs text-slate-300 font-semibold">(${fmtBRL(eqBRL)})</span></p>
+            </div>
+            <button onclick="openQRCodeModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-3 rounded-xl">
+              Cartão QR no Caixa
+            </button>
+          </div>
+        </div>
+
+        <!-- Sub-abas do Membro -->
+        <div class="no-print flex flex-wrap gap-2">
+          <button onclick="setMembroTab('checkin_tarefas')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${state.membroTab === 'checkin_tarefas' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-300 border border-slate-800'}">Check-in & Tarefas Diárias</button>
+          <button onclick="setMembroTab('roleta')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${state.membroTab === 'roleta' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-300 border border-slate-800'}">Roleta Premiada</button>
+          <button onclick="setMembroTab('cupons_vouchers')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${state.membroTab === 'cupons_vouchers' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-300 border border-slate-800'}">Cupons & Vouchers (Imprimir)</button>
+          <button onclick="setMembroTab('cofrinho_heranca')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${state.membroTab === 'cofrinho_heranca' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-300 border border-slate-800'}">Cofrinho & Rede (8 Níveis)</button>
+        </div>
+
+        ${state.membroTab === 'checkin_tarefas' ? `
+          <div class="space-y-6">
+            <!-- Check-in Diário (7 Dias) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 class="text-base font-extrabold text-white">Check-in Diário — Sequência de 7 Dias</h3>
+                  <p class="text-xs text-slate-400">Entre todo dia para somar JTS e cupons de 9 dígitos. Completando o 7º dia, libera bônus extra de +${state.configCheckin.bonusCicloJts} JTS e +${state.configCheckin.bonusCicloCupons} cupons.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="resetarSimulacaoDiaria()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3 py-2 rounded-xl border border-slate-700">
+                    Simular Próximo Dia
+                  </button>
+                  <button onclick="fazerCheckinDiario()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl ${m.checkinHoje ? 'opacity-60' : ''}">
+                    ${m.checkinHoje ? '✓ Check-in Feito Hoje' : `Reclamar Dia ${m.streakDia}`}
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                ${state.configCheckin.dias.map(d => {
+                  const isAtual = d.dia === m.streakDia;
+                  const concluido = d.dia < m.streakDia || (d.dia === m.streakDia && m.checkinHoje);
+                  return `
+                    <div class="rounded-xl p-3 border text-center space-y-1 ${isAtual ? 'bg-emerald-950/80 border-emerald-400' : (concluido ? 'bg-slate-950/60 border-emerald-800/50 opacity-75' : 'bg-slate-950 border-slate-800')}">
+                      <p class="text-[11px] font-bold ${isAtual ? 'text-emerald-300' : 'text-slate-400'}">${d.rotulo}</p>
+                      <p class="text-sm font-black text-white">${d.jts > 0 ? `+${d.jts} JTS` : ''}${d.jts > 0 && d.cupons > 0 ? ' + ' : ''}${d.cupons > 0 ? `+${d.cupons} Cupom` : ''}</p>
+                      <p class="text-[10px] font-semibold ${concluido ? 'text-emerald-400' : (isAtual ? 'text-amber-300' : 'text-slate-500')}">
+                        ${concluido ? 'Concluído' : (isAtual ? 'Disponível Hoje' : 'Em breve')}
+                      </p>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Tarefas Diárias -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 class="text-base font-extrabold text-white">Tarefas Diárias do Clube</h3>
+                  <p class="text-xs text-slate-400">Complete as missões do dia para acumular mais JTS e cupons de sorteio.</p>
+                </div>
+                <span class="text-xs font-bold text-emerald-400">Progresso do dia: ${feitasHoje}/${totalTarefasAtivas} (${pctTarefas}%)</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div class="h-full bg-emerald-500 transition-all" style="width: ${pctTarefas}%"></div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                ${state.tarefasDiarias.filter(t => t.ativa).map(t => {
+                  const done = m.tarefasConcluidas.includes(t.id);
+                  const recompensa = [t.jts > 0 ? `+${t.jts} JTS` : '', t.cupons > 0 ? `+${t.cupons} Cupom 9D` : ''].filter(Boolean).join(' & ');
+                  return `
+                    <div class="bg-slate-950 border ${done ? 'border-emerald-800/60' : 'border-slate-800'} rounded-xl p-4 flex items-center justify-between gap-3">
+                      <div class="space-y-1">
+                        <p class="text-sm font-bold text-white">${t.titulo}</p>
+                        <p class="text-xs text-slate-400">${t.descricao}</p>
+                        <p class="text-xs font-extrabold text-emerald-400">${recompensa}</p>
+                      </div>
+                      <button onclick="concluirTarefaDiaria('${t.id}')" ${done ? 'disabled' : ''} class="shrink-0 px-3.5 py-2 rounded-xl text-xs font-extrabold ${done ? 'bg-slate-800 text-emerald-400 cursor-default' : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'}">
+                        ${done ? '✓ Recebido' : 'Concluir'}
+                      </button>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        ${state.membroTab === 'roleta' ? `
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col items-center space-y-4">
+            <h3 class="text-base font-extrabold text-white">Roleta Premiada Sincronizada</h3>
+            <div class="relative w-64 h-64 flex items-center justify-center">
+              <div class="absolute -top-2 z-10 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[18px] border-t-amber-400"></div>
+              <svg id="roleta-wheel" viewBox="0 0 200 200" class="w-60 h-60 rounded-full border-4 border-emerald-500/50" style="transform: rotate(${state.roletaAngulo}deg)">
+                ${state.roletaPremios.map((p, i) => {
+                  const total = state.roletaPremios.length;
+                  const a1 = (i * 360 / total - 90) * Math.PI / 180;
+                  const a2 = ((i + 1) * 360 / total - 90) * Math.PI / 180;
+                  const x1 = 100 + 95 * Math.cos(a1);
+                  const y1 = 100 + 95 * Math.sin(a1);
+                  const x2 = 100 + 95 * Math.cos(a2);
+                  const y2 = 100 + 95 * Math.sin(a2);
+                  const mid = ((i + 0.5) * 360 / total - 90) * Math.PI / 180;
+                  const tx = 100 + 58 * Math.cos(mid);
+                  const ty = 100 + 58 * Math.sin(mid);
+                  return `
+                    <path d="M 100 100 L ${x1} ${y1} A 95 95 0 0 1 ${x2} ${y2} Z" fill="${p.cor}" stroke="#0f172a" stroke-width="1.5" />
+                    <text x="${tx}" y="${ty}" fill="#ffffff" font-size="7.5" font-weight="bold" text-anchor="middle" dominant-baseline="middle">${p.label}</text>
+                  `;
+                }).join('')}
+              </svg>
+            </div>
+            <p class="text-xs font-bold text-emerald-300 text-center">${state.roletaResultado}</p>
+            <button onclick="girarRoleta()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-6 py-3 rounded-xl">
+              Girar Roleta Agora
+            </button>
+          </div>
+        ` : ''}
+
+        ${state.membroTab === 'cupons_vouchers' ? `
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-extrabold text-white">Cupons de Sorteio (9 Dígitos)</h3>
+                <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-xs px-3 py-1.5 rounded-lg border border-slate-700">Imprimir Cupons</button>
+              </div>
+              <div class="space-y-2">
+                ${m.cupons.map(c => `
+                  <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
+                    <div>
+                      <p class="font-mono font-black text-emerald-400 text-sm">#${c.codigo}</p>
+                      <p class="text-slate-300">${c.origem} · <span class="text-slate-400">${c.sorteio}</span></p>
+                    </div>
+                    <span class="px-2 py-1 rounded bg-emerald-500/15 text-emerald-300 font-bold text-[10px]">${c.tipo}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-extrabold text-white">Vouchers de Prêmios Resgatados</h3>
+                <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-xs px-3 py-1.5 rounded-lg border border-slate-700">Imprimir Vouchers</button>
+              </div>
+              <div class="space-y-2">
+                ${m.vouchers.map(v => `
+                  <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
+                    <div>
+                      <p class="font-bold text-white">${v.premio}</p>
+                      <p class="font-mono text-emerald-400">${v.codigo} · ${v.loja}</p>
+                    </div>
+                    <span class="text-[10px] font-bold text-amber-300">${v.status}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        ${state.membroTab === 'cofrinho_heranca' ? `
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+              <h3 class="text-sm font-extrabold text-white">Cofrinho "Objetivo dos Sonhos"</h3>
+              <p class="text-xs text-slate-400">Meta: <strong class="text-white">${m.cofrinho.metaNome}</strong> (${fmtNum(m.cofrinho.guardadoJts)} / ${fmtNum(m.cofrinho.metaJts)} JTS · +${m.cofrinho.rendimentoMensalPct}% a.m.)</p>
+              <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-400" style="width: ${pctCofrinho}%"></div>
+              </div>
+              <div class="flex gap-2 pt-1">
+                <input id="cofrinho-aporte" type="number" value="20" min="1" class="w-28 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+                <button onclick="depositarCofrinho()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl">Guardar JTS</button>
+              </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2">
+              <h3 class="text-sm font-extrabold text-white">Demonstrativo Bônus Herança (1º ao 8º Nível)</h3>
+              ${m.herancaNiveis.map(n => `
+                <div class="flex items-center justify-between text-xs bg-slate-950 px-3 py-2 rounded-lg border border-slate-800">
+                  <span class="font-bold text-slate-200">Nível ${n.nivel} (${n.pct}%) · ${n.indicados} pessoas</span>
+                  <span class="font-mono font-bold text-emerald-400">+${fmtNum(n.volumeMensalJts * (n.pct / 100))} JTS/mês</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    function renderLojista() {
+      const l = state.lojista;
+      const roiPct = l.custoPontosMes > 0 ? Math.round(((l.faturamentoFidelizadoMes - l.custoPontosMes * state.economia.cotacaoAtacado) / (l.custoPontosMes * state.economia.cotacaoAtacado)) * 100) : 0;
+
+      return `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div>
+            <span class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">${l.plano}</span>
+            <h2 class="text-xl font-black text-white mt-1">${l.nome}</h2>
+            <p class="text-xs text-slate-400">Saldo Atacado Disponível: <strong class="text-emerald-400">${fmtNum(l.saldoAtacadoJts)} JTS</strong> · Faturamento Fidelizado: <strong class="text-white">${fmtBRL(l.faturamentoFidelizadoMes)}</strong> · ROI Estimado: <strong class="text-emerald-400">+${roiPct}%</strong></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="state.ofertaRelampago.ativa = !state.ofertaRelampago.ativa; renderFlashOffer(); showToast('Status da Oferta Relâmpago atualizado na Vitrine.');" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl">
+              ${state.ofertaRelampago.ativa ? 'Pausar Oferta Relâmpago' : 'Ativar Oferta Relâmpago'}
+            </button>
+          </div>
+        </div>
+
+        <!-- Relatórios & Inteligência Comercial do Lojista -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+            <h3 class="text-sm font-extrabold text-white">Melhores Horários & Janela de Promoção</h3>
+            ${l.horariosPico.map(h => `
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs">
+                  <span class="font-bold text-slate-200">${h.faixa} — <span class="text-slate-400 font-normal">${h.tag}</span></span>
+                  <span class="font-mono font-bold text-emerald-400">${h.pct}%</span>
+                </div>
+                <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden">
+                  <div class="h-full bg-emerald-500" style="width: ${h.pct}%"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+            <h3 class="text-sm font-extrabold text-white">Clientes da Loja — Tempo sem Comprar & Reativação</h3>
+            <div class="space-y-2">
+              ${l.clientes.map(c => `
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
+                  <div>
+                    <p class="font-bold text-white">${c.nome} <span class="text-slate-400 font-normal">(${c.visitas} compras · ${fmtBRL(c.gasto)})</span></p>
+                    <p class="text-slate-400">Sem comprar há <strong class="text-amber-300">${c.diasSemComprar} dias</strong> · Horário comum: ${c.horario}</p>
+                  </div>
+                  <span class="px-2 py-1 rounded text-[10px] font-bold ${c.status === 'Ativo' ? 'bg-emerald-500/20 text-emerald-300' : (c.status === 'Atenção' ? 'bg-amber-500/20 text-amber-300' : 'bg-rose-500/20 text-rose-300')}">${c.status}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdmin() {
+      return `
+        <div class="no-print flex flex-wrap gap-2">
+          <button onclick="setAdminTab('checkin_config')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${state.adminTab === 'checkin_config' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-300 border border-slate-800'}">Config. Check-in & Tarefas Diárias</button>
+          <button onclick="setAdminTab('economia_config')" class="px-3.5 py-2 rounded-xl text-xs font-bold ${state.adminTab === 'economia_config' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-300 border border-slate-800'}">Cotação JTS & Valorização</button>
+        </div>
+
+        ${state.adminTab === 'checkin_config' ? `
+          <div class="space-y-6">
+            <!-- Editor Check-in 7 Dias -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div>
+                <h3 class="text-base font-extrabold text-white">Configurar Recompensas do Check-in Diário (7 Dias)</h3>
+                <p class="text-xs text-slate-400">Altere os valores de JTS ou cupons de cada dia e clique em Salvar para atualizar a Área do Membro na hora.</p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                ${state.configCheckin.dias.map((d, idx) => `
+                  <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2 text-xs">
+                    <p class="font-extrabold text-emerald-400">${d.rotulo}</p>
+                    <select id="adm-dia-tipo-${idx}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white">
+                      <option value="JTS" ${d.tipo === 'JTS' ? 'selected' : ''}>Apenas Pontos JTS</option>
+                      <option value="CUPOM" ${d.tipo === 'CUPOM' ? 'selected' : ''}>Apenas Cupons 9D</option>
+                      <option value="AMBOS" ${d.tipo === 'AMBOS' ? 'selected' : ''}>Pontos JTS + Cupons 9D</option>
+                    </select>
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="text-[10px] text-slate-400">JTS</label>
+                        <input id="adm-dia-jts-${idx}" type="number" value="${d.jts}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white" />
+                      </div>
+                      <div>
+                        <label class="text-[10px] text-slate-400">Cupons</label>
+                        <input id="adm-dia-cup-${idx}" type="number" value="${d.cupons}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white" />
+                      </div>
+                    </div>
+                    <button onclick="salvarDiaCheckinAdmin(${idx})" class="w-full bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-bold py-1.5 rounded-lg transition">
+                      Salvar Dia ${d.dia}
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Criar & Gerenciar Tarefas Diárias -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <h3 class="text-base font-extrabold text-white">Gerenciar Tarefas Diárias dos Membros</h3>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950 border border-slate-800 rounded-xl p-4">
+                <input id="nova-tarefa-titulo" type="text" placeholder="Título da nova tarefa (ex: Indicar 1 amigo)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+                <input id="nova-tarefa-desc" type="text" placeholder="Descrição curta da missão" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" />
+                <div class="flex gap-2">
+                  <input id="nova-tarefa-jts" type="number" value="6" placeholder="JTS" class="w-1/2 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white" />
+                  <input id="nova-tarefa-cup" type="number" value="1" placeholder="Cupons" class="w-1/2 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white" />
+                </div>
+                <button onclick="adicionarTarefaAdmin()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl">
+                  + Adicionar Tarefa
+                </button>
+              </div>
+
+              <div class="space-y-2">
+                ${state.tarefasDiarias.map(t => `
+                  <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
+                    <div>
+                      <p class="font-bold text-white">${t.titulo} <span class="text-emerald-400 font-mono ml-1">[+${t.jts} JTS · +${t.cupons} Cupom]</span></p>
+                      <p class="text-slate-400">${t.descricao}</p>
+                    </div>
+                    <button onclick="toggleTarefaAdmin('${t.id}')" class="px-3 py-1.5 rounded-lg font-bold ${t.ativa ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'}">
+                      ${t.ativa ? 'Ativa' : 'Pausada'}
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        ` : `
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 max-w-2xl">
+            <h3 class="text-base font-extrabold text-white">Cotação da Moeda JTS & Valorização</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <label class="block text-slate-400 mb-1">Cotação Varejo (R$)</label>
+                <input id="adm-cot-varejo" type="number" step="0.01" value="${state.economia.cotacaoVarejo}" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Cotação Atacado Lojista (R$)</label>
+                <input id="adm-cot-atacado" type="number" step="0.01" value="${state.economia.cotacaoAtacado}" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Valorização Mensal (%)</label>
+                <input id="adm-val-mes" type="number" step="0.1" value="${state.economia.valorizacaoMensalPct}" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white" />
+              </div>
+            </div>
+            <button onclick="salvarEconomiaAdmin()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-5 py-2.5 rounded-xl">
+              Salvar Parâmetros Econômicos
+            </button>
+          </div>
+        `}
+      `;
+    }
+
+    function render() {
+      renderTicker();
+      renderFlashOffer();
+      const root = document.getElementById('app-root');
+      if (state.mainTab === 'vitrine') root.innerHTML = renderVitrine();
+      else if (state.mainTab === 'membro') root.innerHTML = renderMembro();
+      else if (state.mainTab === 'lojista') root.innerHTML = renderLojista();
+      else root.innerHTML = renderAdmin();
+    }
+
+    // Assinatura manuscrita no canvas
+    (function setupSignature() {
+      const canvas = document.getElementById('sig-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.strokeStyle = '#34d399';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      let drawing = false;
+
+      function pos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: ((clientX - rect.left) / rect.width) * canvas.width,
+          y: ((clientY - rect.top) / rect.height) * canvas.height
+        };
+      }
+
+      function start(e) {
+        drawing = true;
+        const p = pos(e);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+      }
+      function move(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        const p = pos(e);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+      }
+      function stop() { drawing = false; }
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', stop);
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', move, { passive: false });
+      window.addEventListener('touchend', stop);
+    })();
+
+    render();
+  </script>
+</body>
+</html>
